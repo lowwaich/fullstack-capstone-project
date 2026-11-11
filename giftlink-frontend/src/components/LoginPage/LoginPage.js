@@ -52,7 +52,7 @@ function LoginPage() {
                     password: password,
                 })
 
-            })
+            });
 
             // Task 1: Access data coming from fetch API
             const json = await res.json();
