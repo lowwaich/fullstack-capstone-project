@@ -1,93 +1,73 @@
 
-import React, { useState } from 'react';
-import './LoginPage.css';
-
-//{{Insert code here}} //Task 1: Import urlConfig from `giftlink-frontend/src/config.js`
-import { urlConfig } from '../../config';
-
-//{{Insert code here}} //Task 2: Import useAppContext `giftlink-frontend/context/AuthContext.js`
+import React, { useState,useEffect } from 'react';
+//Step 1 - Task 1
+import {urlConfig} from '../../config';
+//Step 1 - Task 2
 import { useAppContext } from '../../context/AuthContext';
-
-//{{Insert code here}} //Task 3: Import useNavigate from `react-router-dom` to handle navigation after successful registration.
+//Step 1 - Task 3
 import { useNavigate } from 'react-router-dom';
 
-function LoginPage() {
+import './LoginPage.css';
 
-    //insert code here to create useState hook variables for email, password
+function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-
-    //Do these tasks inside the RegisterPage function after the useStates definition
-    //{{Insert code here}} //Task 4: Include a state for incorrect password.
-    const [incorrect, setIncorrect] = useState('');
-
-    //{{Insert code here}} //Task 5: Create a local variable for `navigate`,`bearerToken`   and `setIsLoggedIn`.
-    const navigate = useNavigate();
+	//Step 1 - Task 4
+	const [incorrect, setIncorrect] = useState('');
+	//Step 1 - Task 5
+	const navigate = useNavigate();
     const bearerToken = sessionStorage.getItem('bearer-token');
     const { setIsLoggedIn } = useAppContext();
 
-    //{{Insert code here}} //Task 6. If the bearerToken has a value (user already logged in), navigate to MainPage
+	//Step 1 - Task 6
     useEffect(() => {
         if (sessionStorage.getItem('auth-token')) {
-            navigate('/app')
+          navigate('/app')
         }
-    }, [navigate])
+      }, [navigate])
 
-    // insert code here to create handleLogin function and include console.log
-    const handleLogin = async () => {
-        try {
-            //first task
-            const response = await fetch(`/api/auth/login`, {
-                //{{Insert code here}} //Task 7: Set method
-                method: 'POST',
-                //{{Insert code here}} //Task 8: Set headers
-                headers: {
-                    'content-type': 'application/json',
-                    'Authorization': bearerToken ? `Bearer ${bearerToken}` : '', // Include Bearer token if available
-                },
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        //api call
+        const res = await fetch(`${urlConfig.backendUrl}/api/auth/login`, {
+			//Step 1 - Task 7
+			method: 'POST',
+			//Step 1 - Task 8
+          headers: {
+            'content-type': 'application/json',
+            'Authorization': bearerToken ? `Bearer ${bearerToken}` : '', // Include Bearer token if available
+          },
+		//Step 1 - Task 9
+          body: JSON.stringify({
+            email: email,
+            password: password,
+          })
+        });
 
-                //{{Insert code here}} //Task 9: Set body to send user details
-                body: JSON.stringify({
-                    email: email,
-                    password: password,
-                })
-
-            });
-
-            // Task 1: Access data coming from fetch API
-            const json = await res.json();
-
-            // Task 2: Set user details
-            sessionStorage.setItem('auth-token', json.authtoken);
-            sessionStorage.setItem('name', json.userName);
-            sessionStorage.setItem('email', json.userEmail);
-
-            // Task 3: Set the user's state to log in using the `useAppContext`.
-            setIsLoggedIn(true);
-
-            // Task 4: Navigate to the MainPage after logging in.
-            navigate('/app');
-
-            // Task 5: Clear input and set an error message if the password is incorrect
-            if (json.authtoken) {
-                // Tasks 1-4 done previously
-            } else {
-                document.getElementById("email").value = "";
-                document.getElementById("password").value = "";
-                setIncorrect("Wrong password. Try again.");
-                //Below is optional, but recommended - Clear out error message after 2 seconds
-                setTimeout(() => {
-                    setIncorrect("");
-                }, 2000);
-            }
-
-            // Task 6: Display an error message to the user.
-            <span style={{color:'red',height:'.5cm',display:'block',fontStyle:'italic',fontSize:'12px'}}>{incorrect}</span>
-
-        } catch (e) {
-            console.log("Error fetching details: " + e.message);
+		//Step 2: Task 1
+		const json = await res.json();
+        console.log('Json',json);
+        if (json.authtoken) {
+			//Step 2: Task 2
+          sessionStorage.setItem('auth-token', json.authtoken);
+          sessionStorage.setItem('name', json.userName);
+          sessionStorage.setItem('email', json.userEmail);
+			//Step 2: Task 3
+          setIsLoggedIn(true);
+			//Step 2: Task 4
+	      navigate('/app');
+        } else {
+			//Step 2: Task 5
+          document.getElementById("email").value="";
+          document.getElementById("password").value="";
+          setIncorrect("Wrong password. Try again.");
+          setTimeout(() => {
+            setIncorrect("");
+          }, 2000);
         }
-    }
+
+      }
+
 
     return (
         <div className="container mt-5">
@@ -95,8 +75,6 @@ function LoginPage() {
                 <div className="col-md-6 col-lg-4">
                     <div className="login-card p-4 border rounded">
                         <h2 className="text-center mb-4 font-weight-bold">Login</h2>
-
-                        {/* insert code here to create input elements for the variables email and  password */}
                         <div className="mb-3">
                             <label htmlFor="email" className="form-label">Email</label>
                             <input
@@ -105,22 +83,32 @@ function LoginPage() {
                                 className="form-control"
                                 placeholder="Enter your email"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e) => {setEmail(e.target.value); setIncorrect("")}}
                             />
                         </div>
+                        <div className="mb-4">
+                            <label htmlFor="password" className="form-label">Password</label>
+                            <input
+                                id="password"
+                                type="password"
+                                className="form-control"
+                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => {setPassword(e.target.value);setIncorrect("")}}
+                            />
 
-                        {/* insert code here to create a button that performs the `handleLogin` function on click */}
+							{/*Step 2: Task 6*/}
+                            <span style={{color:'red',height:'.5cm',display:'block',fontStyle:'italic',fontSize:'12px'}}>{incorrect}</span>
+                        </div>
                         <button className="btn btn-primary w-100 mb-3" onClick={handleLogin}>Login</button>
-
                         <p className="mt-4 text-center">
                             New here? <a href="/app/register" className="text-primary">Register Here</a>
                         </p>
-
                     </div>
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
 export default LoginPage;
