@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import {urlConfig} from '../../config';
+import { urlConfig } from '../../config';
 
 function SearchPage() {
 
@@ -30,17 +30,44 @@ function SearchPage() {
         fetchProducts();
     }, []);
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [ageRange, setAgeRange] = useState(6); // Initialize with minimum value
+    const [searchResults, setSearchResults] = useState([]);
+
+    const handleSearchChange = (event) => {
+        setSearchQuery(event.target.value);
+    };
 
     // Task 2. Fetch search results from the API based on user inputs.
+    const handleSearch = async () => {
+        // Construct the search URL based on user input
+        const baseUrl = `${urlConfig.backendUrl}/api/search?`;
+        const queryParams = new URLSearchParams({
+            name: searchQuery,
+            age_years: ageRange,
+            category: document.getElementById('categorySelect').value,
+            condition: document.getElementById('conditionSelect').value,
+        }).toString();
+
+        try {
+            const response = await fetch(`${baseUrl}${queryParams}`);
+            if (!response.ok) {
+                throw new Error('Search failed');
+            }
+            const data = await response.json();
+            setSearchResults(data);
+        } catch (error) {
+            console.error('Failed to fetch search results:', error);
+        }
+    };
 
     const navigate = useNavigate();
 
     const goToDetailsPage = (productId) => {
         // Task 6. Enable navigation to the details page of a selected gift.
+        navigate(`/app/product/${productId}`);
+
     };
-
-
-
 
     return (
         <div className="container mt-5">
@@ -50,12 +77,79 @@ function SearchPage() {
                         <h5>Filters</h5>
                         <div className="d-flex flex-column">
                             {/* Task 3: Dynamically generate category and condition dropdown options.*/}
+                            {/* Category Dropdown */}
+                            <label htmlFor="categorySelect">Category</label>
+                            <select id="categorySelect" className="dropdown-filter">
+                                <option value="">All</option>
+                                {categories.map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
+
+                            {/* Condition Dropdown */}
+                            <label htmlFor="conditionSelect">Condition</label>
+                            <select id="conditionSelect" className="dropdown-filter">
+                                <option value="">All</option>
+                                {conditions.map(condition => (
+                                    <option key={condition} value={condition}>{condition}</option>
+                                ))}
+                            </select>
+
                             {/* Task 4: Implement an age range slider and display the selected value. */}
+                            {/* Age Range Slider */}
+                            <label htmlFor="ageRange">Less than {ageRange} years</label>
+                            <input
+                                type="range"
+                                className="age-range-slider"
+                                id="ageRange"
+                                min="1"
+                                max="10"
+                                value={ageRange}
+                                onChange={e => setAgeRange(e.target.value)}
+                            />
+
                         </div>
                     </div>
                     {/* Task 7: Add text input field for search criteria*/}
+                    <div className="search-controls">
+                        <input
+                            type="text"
+                            className="search-input"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder="Search..."
+                            aria-label="Search query"
+                        />
+                        <button type="button" className="search-button" onClick={handleSearch}>
+                            Search
+                        </button>
+                    </div>
                     {/* Task 8: Implement search button with onClick event to trigger search:*/}
                     {/*Task 5: Display search results and handle empty results with a message. */}
+                    <div className="search-results mt-4">
+                        {searchResults.length > 0 ? (
+                            searchResults.map(product => (
+                                <div key={product.id} className="search-results-card">
+                                    {/* Check if product has an image and display it */}
+                                    <img src={product.image} alt={product.name} className="card-img-top" />
+                                    <div className="card-body">
+                                        <h5 className="card-title">{product.name}</h5>
+                                        <p className="card-text">{product.description.slice(0, 100)}...</p>
+                                    </div>
+                                    <div className="card-footer">
+                                        <button onClick={() => goToDetailsPage(product.id)} className="btn btn-primary">
+                                            View More
+                                        </button>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="no-products-alert" role="alert">
+                                No products found. Please revise your filters.
+                            </div>
+                        )}
+                    </div>
+
                 </div>
             </div>
         </div>
